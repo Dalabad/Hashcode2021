@@ -10,7 +10,7 @@ import (
 )
 
 type Car struct {
-	Path                    []Street
+	Path                    []*Street
 	DurationOnCurrentStreet int
 	IsFinished              bool
 }
@@ -196,7 +196,7 @@ func (d *Dataset) ReadInput(filename string) {
 		scanner.Scan()
 		carData := strings.Split(scanner.Text(), " ")
 		pathLength, _ := strconv.Atoi(carData[0])
-		car := Car{Path: make([]Street, pathLength), DurationOnCurrentStreet: 0}
+		car := Car{Path: make([]*Street, pathLength), DurationOnCurrentStreet: 0}
 
 		for j := 1; j <= pathLength; j++ {
 			car.Path[j-1] = d.FindStreetByName(carData[j])
@@ -232,10 +232,10 @@ func (d *Dataset) FindIntersectionById(id int) *Intersection {
 	panic(fmt.Sprintf("intersection %d not found", id))
 }
 
-func (d *Dataset) FindStreetByName(name string) Street {
+func (d *Dataset) FindStreetByName(name string) *Street {
 	for _, street := range d.Streets {
 		if street.Name == name {
-			return street
+			return &street
 		}
 	}
 	panic(fmt.Sprintf("street %s not found", name))
@@ -286,7 +286,6 @@ func (d *Dataset) Simulate() {
 					fmt.Printf("Car arrived at destination %+v\n", car)
 					// Car has completed its path, remove
 					d.UpdateScore(simulationTimestamp)
-					continue
 				}
 
 				// Remove car from street
