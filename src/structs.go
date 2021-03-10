@@ -212,7 +212,9 @@ func (d *Dataset) UpdateScore(timestamp int) {
 }
 
 func (d *Dataset) Simulate() {
-	for simulationTimestamp := 0; simulationTimestamp < d.Time; simulationTimestamp++ {
+	for simulationTimestamp := 1; simulationTimestamp <= d.Time; simulationTimestamp++ {
+		fmt.Printf("Simulate step %d\n", simulationTimestamp)
+
 		for _, street := range d.Streets {
 			if len(street.Cars) <= 0 {
 				continue
