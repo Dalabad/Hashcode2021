@@ -160,7 +160,6 @@ func (d *Dataset) ReadInput(filename string) {
 	if len(d.Intersections) != intersectionsCount {
 		panic("intersections count does not add up")
 	}
-	println(len(d.Intersections))
 }
 
 func (d *Dataset) FindStreetByName(name string) Street {
