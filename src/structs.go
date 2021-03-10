@@ -301,8 +301,13 @@ func (d *Dataset) SetSchedules() {
 		}
 
 		// Set traffic lights to green if only one road incoming
-		if len(intersection.Schedule.Streets) == 1 {
+		numStreets := len(intersection.Schedule.Streets)
+		if numStreets == 1 {
 			intersection.Schedule.Duration[0] = d.Time
+		} else if numStreets > 1 {
+			for i := 0; i < numStreets; i++ {
+				intersection.Schedule.Duration[i] = 1
+			}
 		}
 	}
 }
@@ -317,7 +322,7 @@ func (d *Dataset) getAllUnUsedStreets(cars []Car) []Street {
 
 	var streets []Street
 
-	outer:
+outer:
 	for _, street := range d.Streets {
 		for name := range streetNames {
 			if street.Name == name {
