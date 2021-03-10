@@ -292,3 +292,24 @@ func (d *Dataset) getAllUnUsedStreets(cars []Car) []Street {
 
 	return streets
 }
+
+func (d *Dataset) getAllUsedStreets(cars []Car) []Street {
+	streetNames := make(map[string]bool)
+	for _, car := range cars {
+		for _, street := range car.Path {
+			streetNames[street.Name] = true
+		}
+	}
+
+	var streets []Street
+
+	for name := range streetNames {
+		for _, street := range d.Streets {
+			if street.Name == name {
+			streets = append(streets, street)
+			}
+		}
+	}
+
+	return streets
+}
