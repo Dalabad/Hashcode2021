@@ -17,6 +17,6 @@ func main() {
 		d.Simulate()
 		d.WriteOutput(file)
 
-		fmt.Printf("%s - Final Score: %d\n", file, d.Score)
+		fmt.Printf("Input: %s - Final Score: %d\n", file, d.Score)
 	}
 }

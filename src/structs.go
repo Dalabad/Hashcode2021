@@ -12,11 +12,6 @@ import (
 type Car struct {
 	Path                    []*Street
 	DurationOnCurrentStreet int
-	IsFinished              bool
-}
-
-func (c *Car) Delete() {
-	c.IsFinished = true
 }
 
 type Street struct {
@@ -65,8 +60,8 @@ type Dataset struct {
 	Score         int
 	Bonus         int
 	Intersections []*Intersection
-	Streets       []Street
-	Cars          []Car
+	Streets       []*Street
+	Cars          []*Car
 }
 
 func (d *Dataset) WriteOutput(filename string) {
@@ -190,7 +185,7 @@ func (d *Dataset) ReadInput(filename string) {
 		endIntersection.Schedule.Streets = append(endIntersection.Schedule.Streets, &street)
 		endIntersection.Schedule.Duration = append(endIntersection.Schedule.Duration, 0)
 
-		d.Streets = append(d.Streets, street)
+		d.Streets = append(d.Streets, &street)
 	}
 	for i := 0; i < carsCount; i++ {
 		scanner.Scan()
@@ -201,7 +196,7 @@ func (d *Dataset) ReadInput(filename string) {
 		for j := 1; j <= pathLength; j++ {
 			car.Path[j-1] = d.FindStreetByName(carData[j])
 		}
-		d.Cars = append(d.Cars, car)
+		d.Cars = append(d.Cars, &car)
 	}
 
 	for _, car := range d.Cars {
@@ -210,7 +205,7 @@ func (d *Dataset) ReadInput(filename string) {
 
 		for i := range streets {
 			if streets[i].Name == street.Name {
-				streets[i].Cars = append(streets[i].Cars, &car)
+				streets[i].Cars = append(streets[i].Cars, car)
 				break
 			}
 		}
@@ -235,7 +230,7 @@ func (d *Dataset) FindIntersectionById(id int) *Intersection {
 func (d *Dataset) FindStreetByName(name string) *Street {
 	for _, street := range d.Streets {
 		if street.Name == name {
-			return &street
+			return street
 		}
 	}
 	panic(fmt.Sprintf("street %s not found", name))
@@ -251,43 +246,41 @@ func ContainsIntersection(intersections []*Intersection, id int) bool {
 }
 
 func (d *Dataset) UpdateScore(timestamp int) {
-	addScore := 1000 + (d.Time - timestamp)
+	addScore := d.Bonus + (d.Time - timestamp)
 	d.Score += addScore
-	d.Score += d.Bonus
 	fmt.Printf("Increase Score by %d\n", addScore)
 }
 
 func (d *Dataset) Simulate() {
 	for simulationTimestamp := 1; simulationTimestamp <= d.Time; simulationTimestamp++ {
-		fmt.Printf("Simulate step %d\n", simulationTimestamp)
+		fmt.Printf("\n# Simulate step %d\n", simulationTimestamp)
 
+		var alreadyMovedCars []*Car
+
+		outer:
 		for _, street := range d.Streets {
 			if len(street.Cars) <= 0 {
 				continue
 			}
+			fmt.Printf("There are %d cars on %s\n", len(street.Cars), street.Name)
 
 			car := street.Cars[0]
 
+			// Check if car has already been moved during previous street calculations
+			for _, movedCar := range alreadyMovedCars {
+				if movedCar == car {
+					break outer
+				}
+			}
+
 			// Decrease duration of car on current street by 1
 			if car.DurationOnCurrentStreet > 0 {
+				fmt.Printf("car still on %s for %d iterations\n", car.Path[0].Name, car.DurationOnCurrentStreet)
 				car.DurationOnCurrentStreet--
-				fmt.Printf("car still on street for %d iterations\n", car.DurationOnCurrentStreet)
 				continue
 			}
 
-			if street.EndIntersection.isGreen(street, simulationTimestamp) {
-				// Set car to next street
-				if len(car.Path) > 1 {
-					fmt.Printf("Move car to next street\n")
-					car.Path = car.Path[1:]
-					car.DurationOnCurrentStreet = car.Path[0].Length
-				} else {
-					car.IsFinished = true
-					fmt.Printf("Car arrived at destination %+v\n", car)
-					// Car has completed its path, remove
-					d.UpdateScore(simulationTimestamp)
-				}
-
+			if street.EndIntersection.isGreen(*street, simulationTimestamp) {
 				// Remove car from street
 				if len(street.Cars) > 1 {
 					street.Cars = street.Cars[1:]
@@ -295,9 +288,27 @@ func (d *Dataset) Simulate() {
 					street.Cars = []*Car{}
 				}
 
-				// Move car to next street
-				nextStreet := car.Path[0]
-				nextStreet.Cars = append(nextStreet.Cars, car)
+				// Set car to next street
+				if len(car.Path) > 1 {
+					// Remember that car has been moved
+					alreadyMovedCars = append(alreadyMovedCars, car)
+
+					// Set current position of car to next street
+					car.Path = car.Path[1:]
+					fmt.Printf("Moved car to next street, remaining path: %d, will stay there for %d turns\n", len(car.Path), car.Path[0].Length)
+
+					// Add car to next street
+					car.Path[0].Cars = append(car.Path[0].Cars, car)
+
+					// Set duration of car for next street
+					car.DurationOnCurrentStreet = car.Path[0].Length
+				} else {
+					fmt.Printf("Car arrived at destination %+v\n", car)
+					// Car has completed its path, remove
+					d.UpdateScore(simulationTimestamp)
+				}
+			} else {
+				fmt.Printf("Car cant move, light is red\n")
 			}
 		}
 	}
@@ -328,7 +339,7 @@ func (d *Dataset) SetSchedules() {
 	}
 }
 
-func (d *Dataset) getAllUnUsedStreets(cars []Car) []Street {
+func (d *Dataset) getAllUnUsedStreets(cars []*Car) []*Street {
 	streetNames := make(map[string]bool)
 	for _, car := range cars {
 		for _, street := range car.Path {
@@ -336,7 +347,7 @@ func (d *Dataset) getAllUnUsedStreets(cars []Car) []Street {
 		}
 	}
 
-	var streets []Street
+	var streets []*Street
 
 outer:
 	for _, street := range d.Streets {
