@@ -20,15 +20,15 @@ func (c *Car) Delete() {
 
 type Street struct {
 	Cars              []*Car
-	StartIntersection Intersection
-	EndIntersection   Intersection
+	StartIntersection *Intersection
+	EndIntersection   *Intersection
 	Name              string
 	Length            int
 }
 
 type Intersection struct {
 	ID       int
-	Schedule Schedule
+	Schedule *Schedule
 }
 
 func (i *Intersection) isGreen(street Street, timestamp int) bool {
@@ -55,7 +55,7 @@ func (i *Intersection) isGreen(street Street, timestamp int) bool {
 }
 
 type Schedule struct {
-	Streets  []Street
+	Streets  []*Street
 	Duration []int
 }
 
@@ -63,7 +63,7 @@ type Dataset struct {
 	Time          int
 	Score         int
 	Bonus         int
-	Intersections []Intersection
+	Intersections []*Intersection
 	Streets       []Street
 	Cars          []Car
 }
@@ -123,28 +123,38 @@ func (d *Dataset) ReadInput(filename string) {
 		endIntersectionId, _ := strconv.Atoi(streetData[1])
 		name := streetData[2]
 		duration, _ := strconv.Atoi(streetData[3])
-		startIntersection := Intersection{
-			ID:       startIntersectionId,
-			Schedule: Schedule{Streets: make([]Street, 0)},
+
+		if !ContainsIntersection(d.Intersections, startIntersectionId) {
+			startIntersection := Intersection{
+				ID: startIntersectionId,
+				Schedule: &Schedule{
+					Streets:  make([]*Street, 0),
+					Duration: make([]int, 0),
+				},
+			}
+			d.Intersections = append(d.Intersections, &startIntersection)
 		}
-		endIntersection := Intersection{
-			ID:       endIntersectionId,
-			Schedule: Schedule{},
+		if !ContainsIntersection(d.Intersections, endIntersectionId) {
+			endIntersection := Intersection{
+				ID: endIntersectionId,
+				Schedule: &Schedule{
+					Streets:  make([]*Street, 0),
+					Duration: make([]int, 0),
+				},
+			}
+			d.Intersections = append(d.Intersections, &endIntersection)
 		}
-		if !ContainsIntersection(d.Intersections, startIntersection) {
-			d.Intersections = append(d.Intersections, startIntersection)
-		}
-		if !ContainsIntersection(d.Intersections, endIntersection) {
-			d.Intersections = append(d.Intersections, endIntersection)
-		}
+
+		endIntersection := d.FindIntersectionById(endIntersectionId)
 
 		street := Street{
 			Cars:              make([]*Car, 0),
-			StartIntersection: startIntersection,
-			EndIntersection:   Intersection{},
+			StartIntersection: d.FindIntersectionById(startIntersectionId),
+			EndIntersection:   endIntersection,
 			Name:              name,
 			Length:            duration,
 		}
+		endIntersection.Schedule.Streets = append(endIntersection.Schedule.Streets, &street)
 
 		d.Streets = append(d.Streets, street)
 	}
@@ -157,11 +167,21 @@ func (d *Dataset) ReadInput(filename string) {
 		for i := 1; i <= pathLength; i++ {
 			car.Path = append(car.Path, d.FindStreetByName(carData[i]))
 		}
+		d.Cars = append(d.Cars, car)
 	}
 
 	if len(d.Intersections) != intersectionsCount {
 		panic("intersections count does not add up")
 	}
+}
+
+func (d *Dataset) FindIntersectionById(id int) *Intersection {
+	for _, i := range d.Intersections {
+		if i.ID == id {
+			return i
+		}
+	}
+	panic(fmt.Sprintf("intersection %d not found", id))
 }
 
 func (d *Dataset) FindStreetByName(name string) Street {
@@ -173,9 +193,9 @@ func (d *Dataset) FindStreetByName(name string) Street {
 	panic(fmt.Sprintf("street %s not found", name))
 }
 
-func ContainsIntersection(intersections []Intersection, i Intersection) bool {
+func ContainsIntersection(intersections []*Intersection, id int) bool {
 	for _, intersection := range intersections {
-		if i.ID == intersection.ID {
+		if id == intersection.ID {
 			return true
 		}
 	}
