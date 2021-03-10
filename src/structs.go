@@ -76,6 +76,10 @@ func (d *Dataset) WriteOutput(filename string) {
 	}
 	defer f.Close()
 	for _, intersection := range d.Intersections {
+		_, err = f.WriteString(fmt.Sprintf("%d\n", len(d.Intersections)))
+		if err != nil {
+			panic(err)
+		}
 		// ID of the intersection
 		_, err = f.WriteString(fmt.Sprintf("%d\n", intersection.ID))
 		if err != nil {
