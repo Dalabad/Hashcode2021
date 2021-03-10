@@ -64,8 +64,8 @@ type Dataset struct {
 	Cars          []Car
 }
 
-func (d *Dataset) writeOutput() {
-	f, err := os.Create("output/a.out")
+func (d *Dataset) writeOutput(filename string) {
+	f, err := os.Create(fmt.Sprintf("output/%s.out", filename))
 	if err != nil {
 		log.Fatal(err)
 	}

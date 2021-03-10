@@ -6,10 +6,12 @@ func main() {
 
 	files := []string{"a", "b", "c", "d", "e", "f"}
 
+	runDataset := 0
+
 	d := Dataset{}
-	d.readInput(files[0])
+	d.readInput(files[runDataset])
 	d.simulate()
-	d.writeOutput()
+	d.writeOutput(files[runDataset])
 
 	fmt.Printf("Final Score: %d\n", d.Score)
 }
