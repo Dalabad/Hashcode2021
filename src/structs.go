@@ -61,6 +61,7 @@ type Schedule struct {
 type Dataset struct {
 	Time          int
 	Score         int
+	Bonus         int
 	Intersections []Intersection
 	Streets       []Street
 	Cars          []Car
@@ -111,7 +112,7 @@ func (d *Dataset) ReadInput(filename string) {
 	}
 
 	time, intersectionsCount, streetsCount, carsCount, bonusPoints := params[0], params[1], params[2], params[3], params[4]
-	d.Time = time
+	d.Bonus = time
 	d.Score = bonusPoints
 
 	for i := 0; i < streetsCount; i++ {
@@ -183,6 +184,7 @@ func ContainsIntersection(intersections []Intersection, i Intersection) bool {
 func (d *Dataset) UpdateScore(timestamp int) {
 	addScore := 1000 + (d.Time - timestamp)
 	d.Score += addScore
+	d.Score += d.Bonus
 	fmt.Printf("Increase Score by %d\n", addScore)
 }
 
